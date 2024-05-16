@@ -1,0 +1,25 @@
+[package]
+name = "bgm"
+version = "0.1.0"
+edition = "2021"
+
+[profile.release-lto]
+inherits = "release"
+lto = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.38"
+# scraper = "0.18.1"
+reqwest = { version = "0.12.4", features=["json", "cookies"]}
+serde_json = "1.0.117"
+serde = { version = "1.0.201", features=["derive", "serde_derive"]}
+regex = "1.10.4"
+# reqwest_cookie_store = "0.7.0"
+rusqlite = { version = "0.31.0",features=["hooks"] }
+tokio = { version = "1.37.0", features = ["sync", "rt", "time", "macros", "rt-multi-thread", "signal"]}
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features=["time"]}
+tracing-appender = "0.2.3"
+time = {version = "0.3.36", features = ["parsing"]}

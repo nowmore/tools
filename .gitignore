@@ -1,0 +1,9 @@
+/target
+/log
+/.vscode
+*.json
+*.sql
+*.lib
+*.db
+weibo.rs
+*.json
