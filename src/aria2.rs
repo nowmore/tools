@@ -32,7 +32,8 @@ struct Files {
 }
 #[derive(Serialize, Deserialize)]
 struct Status {
-    bitfield: String,
+    #[serde(default)]
+    bitfield: Option<String>,
     completedLength: String,
     connections: String,
     dir: String,
@@ -67,16 +68,16 @@ pub async fn download(uri: &str, dir: &str, out: &str) -> Result<String, Error> 
         ]
     });
 
-    // let json: AddUriRsp = Client::new()
-    //     .post(ARIA2_URL)
-    //     .json(&req)
-    //     .send()
-    //     .await?
-    //     .json()
-    //     .await?;
-    let rsp = Client::new().post(ARIA2_URL).json(&req).send().await?;
-    println!("download rsp:{:?}", rsp);
-    let json: AddUriRsp = rsp.json().await?;
+    let json: AddUriRsp = Client::new()
+        .post(ARIA2_URL)
+        .json(&req)
+        .send()
+        .await?
+        .json()
+        .await?;
+    // let rsp = Client::new().post(ARIA2_URL).json(&req).send().await?;
+    // println!("download rsp:{:?}", rsp);
+    // let json: AddUriRsp = rsp.json().await?;
     Ok(json.result)
 }
 
@@ -102,8 +103,9 @@ pub async fn remove(uid: &str) -> Result<Response, Error> {
 
 pub async fn status(uid: &str) -> Result<(String, String, String), Error> {
     let rsp = jsonrpc("aria2.tellStatus", uid).await?;
-
-    println!("status rsp:{:?}", rsp);
+    // let rsp = rsp.text().await?;
+    // println!("{uid} status rsp: {rsp}");
+    // let r: TellStatusRsp = serde_json::from_str(rsp.as_str()).unwrap();
     let r: TellStatusRsp = rsp.json().await?;
     Ok((
         r.result.status,

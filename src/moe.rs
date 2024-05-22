@@ -1,12 +1,13 @@
 #![allow(non_snake_case)]
 const LATEST_URL: &'static str = "https://bangumi.moe/api/torrent/latest";
-const TORRENT_URL: &'static str = "https://bangumi.moe/api/torrent";
+const TORRENT_URL: &'static str = "https://bangumi.moe/api/torrent/page";
 const HTTP_PROXY: &'static str = "http://127.0.0.1:7890";
 const UA: &'static str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
 
 use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 use reqwest::{header::*, Client};
 use serde::{Deserialize, Serialize};
+
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
@@ -58,7 +59,7 @@ pub async fn get_torrents(
             format!("{}/{}", TORRENT_URL, n)
         };
         let mut rsp: LatestRsp = c
-            .get(url)
+            .get(url.clone())
             .header(USER_AGENT, UA)
             .send()
             .await?

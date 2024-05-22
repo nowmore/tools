@@ -11,6 +11,22 @@ pub fn kill_aria2c() {
     kill("aria2c.exe");
 }
 
+fn get_filename_from_path(path: &str) -> &str {
+    match path.rsplit_once('/') {
+        Some((_, filename)) => filename,
+        None => path,
+    }
+}
+
+fn is_proc_running(name: &str) -> bool {
+    let output = Command::new("tasklist")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    output_str.lines().any(|line| line.contains(name))
+}
+
 pub fn exec<I, S>(name: &str, args: I)
 where
     I: IntoIterator<Item = S>,
@@ -30,7 +46,9 @@ fn run_by_row(rows: &mut Rows) {
         let cmd: String = row.get(0).unwrap();
         let args: String = row.get(1).unwrap();
         let args: Vec<_> = args.split_whitespace().collect();
-        exec(cmd.as_str(), args);
+        if !is_proc_running(get_filename_from_path(cmd.as_str())) {
+            exec(cmd.as_str(), args);
+        }
     }
 }
 pub fn run_proc(name: &str) {

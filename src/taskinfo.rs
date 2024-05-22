@@ -67,7 +67,7 @@ pub fn get_ready_tasks() -> Result<Vec<Task>, Box<dyn std::error::Error>> {
 pub fn update_task(task: &Task) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = db().lock()?;
     let mut stmt = ctx.prepare(
-        "UPDATE task SET state = ?1, uri = ?2, gid = ?3, finish_time = ?4 WHERE id = ?5",
+        "UPDATE task SET state = ?1, uri = ?2, gid = ?3, finish_time = ?4 WHERE id = ?5 and (state <> ?1 or uri <> ?2 or gid <> ?3 or finish_time <> ?4)",
     )?;
 
     stmt.execute(rusqlite::params![
@@ -83,7 +83,7 @@ pub fn update_task(task: &Task) -> Result<(), Box<dyn std::error::Error>> {
 pub fn get_incomplete_tasks() -> Result<Vec<Task>, Box<dyn std::error::Error>> {
     let ctx = db().lock()?;
     let mut stmt = ctx
-        .prepare("SELECT id, bgm_id, episode, regex, path, uri, gid, state FROM task WHERE (state = 2 or state = 3) and datetime(CURRENT_TIMESTAMP, 'localtime')")
+        .prepare("SELECT id, bgm_id, episode, regex, path, uri, gid, exec_time, state FROM task WHERE (state = 2 or state = 3) and datetime(CURRENT_TIMESTAMP, 'localtime')")
         ?;
     let tasks = stmt.query_map([], |row| {
         Ok(Task {
@@ -94,10 +94,10 @@ pub fn get_incomplete_tasks() -> Result<Vec<Task>, Box<dyn std::error::Error>> {
             path: row.get(4)?,
             uri: row.get(5).unwrap_or_default(),
             gid: row.get(6).unwrap_or_default(),
-            exec_time: "".to_string(),
+            exec_time: row.get(7)?,
             create_time: "".to_string(),
             finish_time: "".to_string(),
-            state: row.get(7).unwrap_or_default(),
+            state: row.get(8).unwrap_or_default(),
         })
     })?;
     let mut result: Vec<Task> = Vec::new();

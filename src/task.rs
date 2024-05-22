@@ -79,14 +79,13 @@ async fn update_task_status(task: &mut taskinfo::Task) {
     }
 }
 async fn exec_task(task: &mut taskinfo::Task, torrents: &Vec<moe::Torrent>) {
-    let re = Regex::new(&task.regex);
-    if re.is_err() {
-        error!("invalid regex:{} of task:{}", task.regex, task.id);
-        task.state = 4;
-        return;
-    }
-
-    if task.uri.len() == 0 {
+    if task.uri.len() == 0 && torrents.len() > 0 {
+        let re = Regex::new(&task.regex);
+        if re.is_err() {
+            error!("invalid regex:{} of task:{}", task.regex, task.id);
+            task.state = 4;
+            return;
+        }
         let re = re.unwrap();
         for t in torrents {
             if re.is_match(&t.title) {
@@ -97,14 +96,15 @@ async fn exec_task(task: &mut taskinfo::Task, torrents: &Vec<moe::Torrent>) {
         }
     }
 
-    match aria2::download(&task.uri, &task.path, "").await {
-        Ok(gid) => {
-            task.state = 3;
-            task.gid = gid;
+    if task.uri.len() != 0 {
+        match aria2::download(&task.uri, &task.path, "").await {
+            Ok(gid) => {
+                task.state = 3;
+                task.gid = gid;
+            }
+            Err(e) => error!("download task:{} error:{:?}", task.id, e),
         }
-        Err(e) => error!("download task:{} error:{:?}", task.id, e),
     }
-    return;
 }
 
 async fn exec_tasks(
@@ -121,19 +121,20 @@ async fn exec_tasks(
     let now = Local::now().naive_local();
     let torrents: Vec<moe::Torrent> =
         if init_state_tasks.len() > 0 && now.signed_duration_since(*last).num_minutes() > 10 {
-            println!("{:?}", init_state_tasks);
             let earliest_time = &init_state_tasks
                 .iter()
                 .min_by(|t1, t2| t1.exec_time.cmp(&t2.exec_time))
                 .unwrap()
                 .exec_time;
-            println!("earliest_time: {earliest_time}");
             let earliest =
                 NaiveDateTime::parse_from_str(earliest_time.as_str(), "%Y-%m-%d %H:%M:%S").unwrap();
 
             match moe::get_torrents(&earliest).await {
                 Err(e) => {
-                    error!("get torrents error:{:?}", e);
+                    error!(
+                        "get torrents failed, please check your proxy config! {:?}",
+                        e
+                    );
                     Vec::new()
                 }
                 Ok(result) => {

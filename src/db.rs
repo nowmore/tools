@@ -25,6 +25,7 @@ pub fn init_db() {
     DB.set(Db::new()).unwrap();
     DB.get().unwrap().ctx.lock().unwrap().update_hook(Some(
         |action, db: &str, tbl: &str, row_id| {
+            // println!("{:?} [{row_id}]/[{tbl}]@[{db}]", action,);
             DB.get()
                 .unwrap()
                 .tx
